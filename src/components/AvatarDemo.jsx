@@ -1,8 +1,8 @@
-// Avatar.jsx
 import { useFrame } from "@react-three/fiber";
 import { useGLTF } from "@react-three/drei";
-import React, { useState, useRef } from "react";
+import React, { useRef } from "react";
 
+// Define the sequence of mouth shapes (visemes) used for lip-sync
 const mouthShapes = [
   "viseme_PP",
   "viseme_kk",
@@ -13,50 +13,59 @@ const mouthShapes = [
   "viseme_FF",
   "viseme_TH",
 ];
-const speed = 10; // Adjust this value to control the speed of lip movement
+const speed = 10; // Speed of mouth shape transition
 
-export function Avatar({ isAudioPlaying }) {
-  const [currentShape, setCurrentShape] = useState(0); // Track the current mouth shape
-  const frameCount = useRef(0); // Counter to control animation speed
+export function AvatarDemo({ isAudioPlaying }) {
+  const currentShapeRef = useRef(0); // Tracks current mouth shape index
+  const frameCount = useRef(0); // Controls the frame rate for shape transitions
   const { nodes, materials } = useGLTF("/models/673195710a5a634d6093651b.glb");
 
-  // Function to reset all mouth shapes to default
+  // Function to reset all mouth shapes to default (neutral position)
   const resetMouthShapes = () => {
     mouthShapes.forEach((shape) => {
-      nodes.Wolf3D_Head.morphTargetInfluences[
-        nodes.Wolf3D_Head.morphTargetDictionary[shape]
-      ] = 0;
-      nodes.Wolf3D_Teeth.morphTargetInfluences[
-        nodes.Wolf3D_Teeth.morphTargetDictionary[shape]
-      ] = 0;
+      const headInfluenceIndex = nodes.Wolf3D_Head.morphTargetDictionary[shape];
+      const teethInfluenceIndex =
+        nodes.Wolf3D_Teeth.morphTargetDictionary[shape];
+      if (headInfluenceIndex !== undefined) {
+        nodes.Wolf3D_Head.morphTargetInfluences[headInfluenceIndex] = 0;
+      }
+      if (teethInfluenceIndex !== undefined) {
+        nodes.Wolf3D_Teeth.morphTargetInfluences[teethInfluenceIndex] = 0;
+      }
     });
   };
 
+  // Use the frame loop to animate lip movement based on `isAudioPlaying`
   useFrame(() => {
     if (!isAudioPlaying) {
+      // If condition is false, reset the mouth shapes and stop animation
       resetMouthShapes();
-      return; // Only animate lips when audio is playing
+      return;
     }
 
+    // Increment frame counter to control animation speed
     frameCount.current += 1;
 
-    // Only update the mouth shape when frameCount reaches the speed threshold
+    // Update mouth shape every `speed` frames to simulate speaking
     if (frameCount.current >= speed) {
-      setCurrentShape((prev) => (prev + 1) % mouthShapes.length);
-      frameCount.current = 0; // Reset the counter
+      currentShapeRef.current =
+        (currentShapeRef.current + 1) % mouthShapes.length;
+      frameCount.current = 0;
     }
 
-    // Reset all morph target influences to 0
+    // Reset all shapes to neutral, then apply the current shape for lip-sync
     resetMouthShapes();
+    const shape = mouthShapes[currentShapeRef.current];
 
-    // Set the influence of the current mouth shape to 1
-    const shape = mouthShapes[currentShape];
-    nodes.Wolf3D_Head.morphTargetInfluences[
-      nodes.Wolf3D_Head.morphTargetDictionary[shape]
-    ] = 1;
-    nodes.Wolf3D_Teeth.morphTargetInfluences[
-      nodes.Wolf3D_Teeth.morphTargetDictionary[shape]
-    ] = 1;
+    // Apply influence to the current shape for both head and teeth
+    const headInfluenceIndex = nodes.Wolf3D_Head.morphTargetDictionary[shape];
+    const teethInfluenceIndex = nodes.Wolf3D_Teeth.morphTargetDictionary[shape];
+    if (headInfluenceIndex !== undefined) {
+      nodes.Wolf3D_Head.morphTargetInfluences[headInfluenceIndex] = 1;
+    }
+    if (teethInfluenceIndex !== undefined) {
+      nodes.Wolf3D_Teeth.morphTargetInfluences[teethInfluenceIndex] = 1;
+    }
   });
 
   return (

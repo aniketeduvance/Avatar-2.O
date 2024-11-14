@@ -9,11 +9,24 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@chatscope/chat-ui-kit-react": "^2.0.3",
+    "@chatscope/chat-ui-kit-styles": "^1.4.0",
+    "@emotion/react": "^11.13.3",
+    "@emotion/styled": "^11.13.0",
+    "@fortawesome/free-brands-svg-icons": "^6.6.0",
+    "@fortawesome/free-regular-svg-icons": "^6.6.0",
+    "@fortawesome/free-solid-svg-icons": "^6.6.0",
+    "@fortawesome/react-fontawesome": "^0.2.2",
+    "@mui/icons-material": "^6.1.7",
+    "@mui/material": "^6.1.7",
     "@react-three/drei": "^9.111.3",
     "@react-three/fiber": "^8.17.6",
     "leva": "^0.9.35",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-router-dom": "^6.28.0",
+    "react-swipeable-views": "^0.14.0",
+    "slick-carousel": "^1.8.1",
     "three": "^0.167.1"
   },
   "devDependencies": {

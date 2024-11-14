@@ -1,11 +1,13 @@
 import { Environment, OrbitControls, useTexture } from "@react-three/drei";
-import { Avatar } from "./Avatar.jsx"; // Note the curly braces
+import { AvatarDemo } from "./AvatarDemo";
 
-export const Experience = () => {
+export const Experience = ({ isAudioPlaying }) => {
   return (
     <>
       <OrbitControls />
-      <Avatar position={[0, -3, 5]} scale={2} />
+      <group position-y={-1.5}>
+        <AvatarDemo isAudioPlaying={isAudioPlaying} />
+      </group>
       <Environment preset="sunset" />
     </>
   );
