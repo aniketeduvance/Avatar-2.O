@@ -12,10 +12,11 @@ import "@chatscope/chat-ui-kit-styles/dist/default/styles.min.css";
 const apiUrl =
   "https://imgqtfwjnae4ewkaeztznr4wb40dzwfn.lambda-url.ap-south-1.on.aws/";
 
-export default function Chatbot({ onSpeakChange }) {
+export default function Chatbot({ onSpeakChange, onFeedbackChange }) {
   const [messages, setMessages] = useState([]);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [selectedVoice, setSelectedVoice] = useState(null);
+  const [feedback, setFeedback] = useState("");
   const [input, setInput] = useState("");
   const [currentPayload, setCurrentPayload] = useState({
     response: "",
@@ -33,24 +34,105 @@ export default function Chatbot({ onSpeakChange }) {
   useEffect(() => {
     const loadVoices = () => {
       const availableVoices = window.speechSynthesis.getVoices();
-      const englishVoice = availableVoices.find(
-        (voice) => voice.lang === "en-GB" || voice.lang === "en-US"
+
+      // Try multiple common female voice names
+      const englishFemaleVoice = availableVoices.find(
+        (voice) =>
+          voice.lang.startsWith("en") && // Match any English voice
+          (voice.name.toLowerCase().includes("female") ||
+            voice.name.toLowerCase().includes("samantha") ||
+            voice.name.toLowerCase().includes("victoria") ||
+            voice.name.toLowerCase().includes("karen") ||
+            voice.name.toLowerCase().includes("moira") ||
+            voice.name.toLowerCase().includes("fiona"))
       );
-      const fallbackVoice = availableVoices.find((voice) =>
-        voice.lang.startsWith("en")
+
+      // If no specific female voice found, try Microsoft voices
+      const microsoftFemaleVoice = availableVoices.find(
+        (voice) =>
+          voice.name.includes("Microsoft") &&
+          voice.name.toLowerCase().includes("female")
       );
-      setSelectedVoice(englishVoice || fallbackVoice);
+
+      // Fallback chain
+      const selectedVoice =
+        englishFemaleVoice ||
+        microsoftFemaleVoice ||
+        availableVoices.find((voice) => voice.lang.startsWith("en"));
+
+      if (selectedVoice) {
+        // console.log("Selected voice:", selectedVoice.name);
+        setSelectedVoice(selectedVoice);
+      } else {
+        console.warn(
+          "No suitable voice found. Available voices:",
+          availableVoices.length
+        );
+      }
     };
 
-    if (window.speechSynthesis.onvoiceschanged !== undefined) {
-      window.speechSynthesis.onvoiceschanged = loadVoices;
-    } else {
-      loadVoices();
-    }
+    // Initial load
+    loadVoices();
+
+    // Setup event listener for voices changed
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+
+    // Cleanup
+    return () => {
+      window.speechSynthesis.onvoiceschanged = null;
+    };
   }, []);
 
-  const speak = (message) => {
+  const speak = (message, isFeedback = false) => {
     const synth = window.speechSynthesis;
+
+    if (!synth) {
+      console.error("Speech synthesis not supported.");
+      return;
+    }
+
+    // Define voice selectors
+    const getFemaleVoice = () => {
+      const availableVoices = window.speechSynthesis.getVoices();
+      return (
+        availableVoices.find(
+          (voice) =>
+            voice.lang.startsWith("en") &&
+            (voice.name.toLowerCase().includes("female") ||
+              voice.name.toLowerCase().includes("samantha") ||
+              voice.name.toLowerCase().includes("victoria") ||
+              voice.name.toLowerCase().includes("karen") ||
+              voice.name.toLowerCase().includes("moira") ||
+              voice.name.toLowerCase().includes("fiona"))
+        ) || availableVoices.find((voice) => voice.lang.startsWith("en"))
+      );
+    };
+
+    const getIndianMaleVoice = () => {
+      const availableVoices = window.speechSynthesis.getVoices();
+
+      // Try to find Indian male voice
+      const indianMaleVoice = availableVoices.find(
+        (voice) =>
+          voice.lang === "en-IN" && voice.name.toLowerCase().includes("male")
+      );
+
+      // If not found, fallback to a generic voice
+      return (
+        indianMaleVoice ||
+        availableVoices.find((voice) => voice.lang === "en-IN") ||
+        availableVoices[0]
+      );
+    };
+
+    // Select voice based on message type
+    const selectedVoice = isFeedback ? getIndianMaleVoice() : getFemaleVoice();
+
+    if (!selectedVoice) {
+      console.error("No suitable voice found. Using default system voice.");
+      return;
+    }
+
     const cleanedMessage = String(message).replace(
       /[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F700}-\u{1F77F}\u{1F780}-\u{1F7FF}\u{1F800}-\u{1F8FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu,
       ""
@@ -62,19 +144,26 @@ export default function Chatbot({ onSpeakChange }) {
       onSpeakChange(false);
     } else {
       const utterance = new SpeechSynthesisUtterance(cleanedMessage);
-      if (selectedVoice) utterance.voice = selectedVoice;
-      synth.speak(utterance);
-      setIsSpeaking(true);
-      onSpeakChange(true);
+      utterance.voice = selectedVoice;
+
       utterance.onend = () => {
         setIsSpeaking(false);
         onSpeakChange(false);
       };
+
+      utterance.onerror = (error) => {
+        console.error("Speech synthesis error:", error);
+      };
+
+      synth.speak(utterance);
+      setIsSpeaking(true);
+      onSpeakChange(true);
     }
   };
 
   const sendMessage = async () => {
     if (!input.trim()) return;
+
     const userMessage = { text: input, sender: "user" };
     setMessages((prevMessages) => [...prevMessages, userMessage]);
 
@@ -92,14 +181,65 @@ export default function Chatbot({ onSpeakChange }) {
       });
 
       const data = await response.json();
+      console.log("API Response:", data);
+
+      // Update flags based on backend response
+      const updatedFlags = {
+        initial_condition:
+          data.message?.initial_condition !== undefined
+            ? data.message.initial_condition
+            : currentPayload.initial_condition,
+        second_condition:
+          data.message?.second_condition !== undefined
+            ? data.message.second_condition
+            : currentPayload.second_condition,
+        status:
+          data.message?.status !== undefined
+            ? data.message.status
+            : currentPayload.status,
+      };
+
       const botMessage = {
         text: data.message?.response || "No response from bot",
         sender: "bot",
       };
       setMessages((prevMessages) => [...prevMessages, botMessage]);
-      if (data.message.response) speak(data.message.response);
+
+      const femaleVoiceDone = new Promise((resolve) => {
+        // Handle response (female voice and lip-sync)
+        if (data.message?.response) {
+          console.log(
+            "Response received, triggering female avatar lip-sync..."
+          );
+          speak(data.message.response, false); // Female voice
+          onSpeakChange(true, "female");
+          setTimeout(() => {
+            console.log("Stopping female avatar lip-sync...");
+            onSpeakChange(false, "female");
+            resolve(); // Signal that the female voice has finished
+          }, Math.max(data.message.response.length * 100, 0)); // Minimum 2 seconds
+        } else {
+          resolve(); // Resolve immediately if no female voice response
+        }
+      });
+
+      femaleVoiceDone.then(() => {
+        // Handle feedback (male voice and lip-sync) after female voice stops
+        if (data.message?.feedback) {
+          console.log("Feedback received, triggering male avatar lip-sync...");
+          speak(data.message.feedback, true); // Male voice
+          onSpeakChange(true, "male");
+          setTimeout(() => {
+            console.log("Stopping male avatar lip-sync...");
+            onSpeakChange(false, "male");
+          }, Math.max(data.message.feedback.length * 100, 0)); // Minimum 2 seconds
+        }
+      });
+
+      // Update currentPayload with flags and new messages
       setCurrentPayload((prevPayload) => ({
         ...prevPayload,
+        ...updatedFlags, // Apply updated flags
         response: data.message?.response || "",
         conversation_list: [
           ...prevPayload.conversation_list,
@@ -107,6 +247,12 @@ export default function Chatbot({ onSpeakChange }) {
           data.message?.response,
         ],
       }));
+
+      // Update feedback
+      if (data.message?.feedback) {
+        setFeedback(data.message.feedback);
+        onFeedbackChange(data.message.feedback);
+      }
     } catch (error) {
       console.error("Error:", error);
       setMessages((prevMessages) => [
@@ -137,7 +283,7 @@ export default function Chatbot({ onSpeakChange }) {
         <ChatContainer>
           <MessageList
             style={{
-              width: "500px",
+              width: "650px",
             }}
           >
             {messages.map((msg, index) => (

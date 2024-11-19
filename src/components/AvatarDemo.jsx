@@ -18,6 +18,7 @@ const speed = 10; // Speed of mouth shape transition
 export function AvatarDemo({ isAudioPlaying }) {
   const currentShapeRef = useRef(0); // Tracks current mouth shape index
   const frameCount = useRef(0); // Controls the frame rate for shape transitions
+
   const { nodes, materials } = useGLTF("/models/673195710a5a634d6093651b.glb");
 
   // Function to reset all mouth shapes to default (neutral position)
@@ -38,7 +39,7 @@ export function AvatarDemo({ isAudioPlaying }) {
   // Use the frame loop to animate lip movement based on `isAudioPlaying`
   useFrame(() => {
     if (!isAudioPlaying) {
-      // If condition is false, reset the mouth shapes and stop animation
+      // Reset the mouth shapes if no audio is playing
       resetMouthShapes();
       return;
     }
