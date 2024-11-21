@@ -266,7 +266,7 @@ export default function Chatbot({ onSpeakChange, onFeedbackChange }) {
   };
 
   useEffect(() => {
-    setMessages([{ text: "Hello! How can I help you?", sender: "bot" }]);
+    // setMessages([{ text: "Hello! How can I help you?", sender: "bot" }]);
     setIsInputDisabled(false);
   }, []);
 

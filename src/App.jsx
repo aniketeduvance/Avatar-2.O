@@ -1,6 +1,13 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Canvas } from "@react-three/fiber";
-import { CssBaseline, Container, Grid, Box, IconButton } from "@mui/material";
+import {
+  CssBaseline,
+  Container,
+  Grid,
+  Box,
+  IconButton,
+  Pagination,
+} from "@mui/material";
 import { Experience } from "./components/Experience";
 import { FemaleExp } from "./components/FemaleExp";
 import Chatbot from "./components/Chatbot";
@@ -26,6 +33,7 @@ function App() {
   };
 
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+  const [layoutOption, setLayoutOption] = useState(1);
 
   const handleFeedbackToggle = () => {
     setIsFeedbackOpen(!isFeedbackOpen);
@@ -122,8 +130,28 @@ function App() {
           item
           xs={12}
           md={isFeedbackOpen ? 3.5 : 5.5}
-          sx={{ height: "100%" }}
+          sx={{
+            height: "100%",
+            position: "relative", // Make the Grid relative for absolute positioning inside it
+          }}
         >
+          {/* Pagination in top-right corner */}
+          <Box
+            sx={{
+              position: "absolute",
+              top: 10,
+              right: 10,
+              zIndex: 10, // Ensure it stays above other elements
+            }}
+          >
+            <Pagination
+              count={3}
+              page={layoutOption}
+              onChange={(event, value) => setLayoutOption(value)}
+              size="small"
+            />
+          </Box>
+
           <Box
             sx={{
               height: "100%",
@@ -138,40 +166,104 @@ function App() {
               backgroundColor: "#f5f5f5",
             }}
           >
-            <Box
-              sx={{
-                width: "100%",
-                height: "30%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                boxShadow: 1,
-                borderRadius: 2,
-                backgroundColor: "white",
-                overflow: "hidden",
-              }}
-            >
-              {/* Webcam component */}
-              <WebcamComponet />
-            </Box>
+            {/* Conditionally rendered components based on layoutOption */}
+            {layoutOption === 1 && (
+              <>
+                <Box
+                  sx={{
+                    width: "100%",
+                    height: "30%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    boxShadow: 1,
+                    borderRadius: 2,
+                    backgroundColor: "white",
+                    overflow: "hidden",
+                  }}
+                >
+                  {/* Webcam component */}
+                  <WebcamComponet />
+                </Box>
 
-            <Box
-              sx={{
-                width: "100%",
-                height: "70%",
-                boxShadow: 1,
-                borderRadius: 2,
-                overflow: "auto",
-                backgroundColor: "white",
-              }}
-            >
-              <Chatbot
-                onSpeakChange={(speaking, avatar) =>
-                  handleSpeakChange(speaking, avatar)
-                }
-                onFeedbackChange={handleFeedbackChange}
-              />
-            </Box>
+                <Box
+                  sx={{
+                    width: "100%",
+                    height: "70%",
+                    boxShadow: 1,
+                    borderRadius: 2,
+                    overflow: "auto",
+                    backgroundColor: "white",
+                  }}
+                >
+                  <Chatbot
+                    onSpeakChange={(speaking, avatar) =>
+                      handleSpeakChange(speaking, avatar)
+                    }
+                    onFeedbackChange={handleFeedbackChange}
+                  />
+                </Box>
+              </>
+            )}
+
+            {layoutOption === 2 && (
+              <>
+                <Box
+                  sx={{
+                    width: "100%",
+                    height: "70%",
+                    boxShadow: 1,
+                    borderRadius: 2,
+                    overflow: "auto",
+                    backgroundColor: "white",
+                  }}
+                >
+                  <Chatbot
+                    onSpeakChange={(speaking, avatar) =>
+                      handleSpeakChange(speaking, avatar)
+                    }
+                    onFeedbackChange={handleFeedbackChange}
+                  />
+                </Box>
+
+                <Box
+                  sx={{
+                    width: "100%",
+                    height: "30%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    boxShadow: 1,
+                    borderRadius: 2,
+                    backgroundColor: "white",
+                    overflow: "hidden",
+                  }}
+                >
+                  {/* Webcam component */}
+                  <WebcamComponet />
+                </Box>
+              </>
+            )}
+
+            {layoutOption === 3 && (
+              <Box
+                sx={{
+                  width: "100%",
+                  height: "100%",
+                  boxShadow: 1,
+                  borderRadius: 2,
+                  overflow: "auto",
+                  backgroundColor: "white",
+                }}
+              >
+                <Chatbot
+                  onSpeakChange={(speaking, avatar) =>
+                    handleSpeakChange(speaking, avatar)
+                  }
+                  onFeedbackChange={handleFeedbackChange}
+                />
+              </Box>
+            )}
           </Box>
         </Grid>
 
