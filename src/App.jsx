@@ -21,6 +21,12 @@ function App() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPlayingFemale, setIsPlayingFemale] = useState(false);
   const [isPlayingMale, setIsPlayingMale] = useState(false);
+  const [botResponse, setBotResponse] = useState("");
+
+  const handleBotResponse = (response) => {
+    console.log("Bot Response:", response);
+    setBotResponse(response);
+  };
 
   const [feedback, setFeedback] = useState("");
   const [displayText, setDisplayText] = useState("");
@@ -59,6 +65,7 @@ function App() {
 
       return () => clearInterval(intervalId); // Cleanup interval
     }
+    setDisplayText("");
   }, [feedback]);
 
   const formatResponse = (response) => {
@@ -103,25 +110,56 @@ function App() {
             sx={{
               height: "100%",
               display: "flex",
+              flexDirection: "column",
               alignItems: "center",
-              justifyContent: "center",
+              justifyContent: "space-between",
+              gap: 2,
               padding: 2,
               boxShadow: 3,
               borderRadius: 2,
               backgroundColor: "#f5f5f5",
             }}
           >
-            <Canvas
-              shadows
-              camera={{
-                position: [0, 0, 12],
-                fov: 5,
+            <Box
+              sx={{
+                height: "70%",
+                width: "90%", // Ensures full width
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: 2,
+                boxShadow: 3,
+                borderRadius: 2,
+                backgroundColor: "#f5f5f5",
               }}
-              style={{ height: "100%", width: "100%" }}
             >
-              {/* Your component for the canvas */}
-              <FemaleExp isAudioPlaying={isPlayingFemale} />
-            </Canvas>
+              <Canvas
+                shadows
+                camera={{
+                  position: [0, 0, 4.5],
+                  fov: 5,
+                }}
+                style={{ height: "100%", width: "100%" }}
+              >
+                {/* Your component for the canvas */}
+                <FemaleExp isAudioPlaying={isPlayingFemale} />
+              </Canvas>
+            </Box>
+            <Box
+              sx={{
+                height: "30%",
+                width: "90%", // Ensures full width
+                display: "flex",
+                padding: 2,
+                boxShadow: 3,
+                borderRadius: 2,
+                backgroundColor: "#f5f5f5",
+              }}
+            >
+              {botResponse.length > 0
+                ? botResponse
+                : "Response will be displayed here"}
+            </Box>
           </Box>
         </Grid>
 
@@ -197,6 +235,7 @@ function App() {
                   }}
                 >
                   <Chatbot
+                    onResponseChange={handleBotResponse}
                     onSpeakChange={(speaking, avatar) =>
                       handleSpeakChange(speaking, avatar)
                     }
@@ -360,7 +399,7 @@ function App() {
                 {displayText.length > 0 ? (
                   <div dangerouslySetInnerHTML={{ __html: displayText }} />
                 ) : (
-                  "Feedback will be displayed here"
+                  ""
                 )}
               </div>
             </Box>

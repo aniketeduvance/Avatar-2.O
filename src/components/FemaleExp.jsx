@@ -6,7 +6,7 @@ export const FemaleExp = ({ isAudioPlaying }) => {
   return (
     <>
       <OrbitControls />
-      <group position-y={-1.5}>
+      <group position-y={-1.58}>
         {/* <AvatarDemo isAudioPlaying={isAudioPlaying} /> */}
         <FemaleAvatar isAudioPlaying={isAudioPlaying} />
       </group>

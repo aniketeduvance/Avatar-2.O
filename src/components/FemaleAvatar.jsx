@@ -1,5 +1,5 @@
 import { useFrame } from "@react-three/fiber";
-import { useGLTF } from "@react-three/drei";
+import { useGLTF, useFBX } from "@react-three/drei";
 import React, { useRef } from "react";
 
 // Define the sequence of mouth shapes (visemes) used for lip-sync

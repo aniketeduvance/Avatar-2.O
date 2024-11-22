@@ -12,12 +12,17 @@ import "@chatscope/chat-ui-kit-styles/dist/default/styles.min.css";
 const apiUrl =
   "https://imgqtfwjnae4ewkaeztznr4wb40dzwfn.lambda-url.ap-south-1.on.aws/";
 
-export default function Chatbot({ onSpeakChange, onFeedbackChange }) {
+export default function Chatbot({
+  onSpeakChange,
+  onFeedbackChange,
+  onResponseChange,
+}) {
   const [messages, setMessages] = useState([]);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [selectedVoice, setSelectedVoice] = useState(null);
   const [feedback, setFeedback] = useState("");
   const [input, setInput] = useState("");
+  const [previousResponse, setPreviousResponse] = useState("");
   const [currentPayload, setCurrentPayload] = useState({
     response: "",
     feedback: "",
@@ -174,6 +179,7 @@ export default function Chatbot({ onSpeakChange, onFeedbackChange }) {
 
     try {
       setAnswerLoad(true);
+
       const response = await fetch(apiUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -183,7 +189,21 @@ export default function Chatbot({ onSpeakChange, onFeedbackChange }) {
       const data = await response.json();
       console.log("API Response:", data);
 
-      // Update flags based on backend response
+      // Add the previous response to the messages
+      if (previousResponse) {
+        const botMessage = {
+          text: previousResponse, // Use the previous response
+          sender: "bot",
+        };
+        setMessages((prevMessages) => [...prevMessages, botMessage]);
+      }
+
+      // Update the previous response with the current one
+      setPreviousResponse(data.message?.response || "");
+      if (data.message?.response) {
+        onResponseChange(data.message.response);
+      }
+
       const updatedFlags = {
         initial_condition:
           data.message?.initial_condition !== undefined
@@ -199,47 +219,38 @@ export default function Chatbot({ onSpeakChange, onFeedbackChange }) {
             : currentPayload.status,
       };
 
-      const botMessage = {
-        text: data.message?.response || "No response from bot",
-        sender: "bot",
-      };
-      setMessages((prevMessages) => [...prevMessages, botMessage]);
-
+      // Handle voice and feedback logic
       const femaleVoiceDone = new Promise((resolve) => {
-        // Handle response (female voice and lip-sync)
         if (data.message?.response) {
-          console.log(
-            "Response received, triggering female avatar lip-sync..."
-          );
-          speak(data.message.response, false); // Female voice
+          console.log("Triggering female avatar lip-sync...");
+          speak(data.message.response, false);
           onSpeakChange(true, "female");
           setTimeout(() => {
             console.log("Stopping female avatar lip-sync...");
             onSpeakChange(false, "female");
-            resolve(); // Signal that the female voice has finished
-          }, Math.max(data.message.response.length * 100, 0)); // Minimum 2 seconds
+            resolve();
+          }, Math.max(data.message.response.length * 100, 0));
         } else {
-          resolve(); // Resolve immediately if no female voice response
+          resolve();
         }
       });
 
       femaleVoiceDone.then(() => {
-        // Handle feedback (male voice and lip-sync) after female voice stops
         if (data.message?.feedback) {
-          console.log("Feedback received, triggering male avatar lip-sync...");
-          speak(data.message.feedback, true); // Male voice
+          console.log("Triggering male avatar lip-sync...");
+          speak(data.message.feedback, true);
           onSpeakChange(true, "male");
           setTimeout(() => {
             console.log("Stopping male avatar lip-sync...");
             onSpeakChange(false, "male");
-          }, Math.max(data.message.feedback.length * 100, 0)); // Minimum 2 seconds
+          }, Math.max(data.message.feedback.length * 100, 0));
         }
       });
 
-      // Update currentPayload with flags and new messages
+      // Update currentPayload with flags and conversation list
       setCurrentPayload((prevPayload) => ({
         ...prevPayload,
-        ...updatedFlags, // Apply updated flags
+        ...updatedFlags,
         response: data.message?.response || "",
         conversation_list: [
           ...prevPayload.conversation_list,
