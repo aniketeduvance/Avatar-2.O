@@ -10,7 +10,7 @@ import {
 import "@chatscope/chat-ui-kit-styles/dist/default/styles.min.css";
 
 const apiUrl =
-  "https://imgqtfwjnae4ewkaeztznr4wb40dzwfn.lambda-url.ap-south-1.on.aws/";
+  "https://6c65myswq3qrewtyhg4vokkvvi0lewxd.lambda-url.ap-south-1.on.aws/";
 
 export default function Chatbot({
   onSpeakChange,
@@ -23,14 +23,17 @@ export default function Chatbot({
   const [feedback, setFeedback] = useState("");
   const [input, setInput] = useState("");
   const [previousResponse, setPreviousResponse] = useState("");
+  const [showStartButton, setShowStartButton] = useState(true);
   const [currentPayload, setCurrentPayload] = useState({
+    conversation_history_list: [],
     response: "",
     feedback: "",
-    initial_condition: true,
-    second_condition: false,
-    conversation_list: [],
-    status: false,
-    salesperson_response: "",
+    activity_4_1st_condition: true,
+    activity_4_2nd_condition: false,
+    evaluation_list: [],
+    satisfaction_condition: false,
+    count: 0,
+    users_response: "",
   });
   const [isInputDisabled, setIsInputDisabled] = useState(true);
   const [answerLoad, setAnswerLoad] = useState(false);
@@ -166,6 +169,93 @@ export default function Chatbot({
     }
   };
 
+  const handleStart = async () => {
+    setShowStartButton(false); // Hide the button
+    setIsInputDisabled(false); // Enable the input field
+    console.log("Handle Start is calling");
+
+    // Reset the current payload for a fresh start
+    const resetPayload = {
+      conversation_history_list: [],
+      response: "",
+      feedback: "",
+      activity_4_1st_condition: true,
+      activity_4_2nd_condition: false,
+      evaluation_list: [],
+      satisfaction_condition: false,
+      count: 0,
+      users_response: "",
+    };
+
+    setCurrentPayload(resetPayload);
+    console.log("Initial Payload before sending:", resetPayload);
+
+    try {
+      const response = await fetch(apiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(resetPayload),
+      });
+
+      const data = await response.json();
+      console.log("First Response data:", data);
+
+      // Add the previous response to the messages
+      if (previousResponse) {
+        const botMessage = {
+          text: previousResponse, // Use the previous response
+          sender: "bot",
+        };
+        setMessages((prevMessages) => [...prevMessages, botMessage]);
+      }
+
+      // Update the previous response with the current one
+      setPreviousResponse(data.message?.response || "");
+      if (data.message?.response) {
+        onResponseChange(data.message.response);
+      }
+
+      // Handle voice and feedback logic
+      const femaleVoiceDone = new Promise((resolve) => {
+        if (data.message?.response) {
+          console.log("Triggering female avatar lip-sync...");
+          speak(data.message.response, false);
+          onSpeakChange(true, "female");
+          setTimeout(() => {
+            console.log("Stopping female avatar lip-sync...");
+            onSpeakChange(false, "female");
+            resolve();
+          }, Math.max(data.message.response.length * 100, 0));
+        } else {
+          resolve();
+        }
+      });
+
+      femaleVoiceDone.then(() => {
+        if (data.message?.feedback) {
+          console.log("Triggering male avatar lip-sync...");
+          speak(data.message.feedback, true);
+          onSpeakChange(true, "male");
+          setTimeout(() => {
+            console.log("Stopping male avatar lip-sync...");
+            onSpeakChange(false, "male");
+          }, Math.max(data.message.feedback.length * 100, 0));
+        }
+      });
+
+      setCurrentPayload((prevPayload) => ({
+        ...prevPayload,
+        ...data.message,
+      }));
+    } catch (error) {
+      console.error("Error fetching intro message:", error);
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        { text: "Sorry, there was an error starting the chat.", sender: "bot" },
+      ]);
+    }
+  };
+
   const sendMessage = async () => {
     if (!input.trim()) return;
 
@@ -174,7 +264,10 @@ export default function Chatbot({
 
     const updatedPayload = {
       ...currentPayload,
-      conversation_list: [...currentPayload.conversation_list, input],
+      conversation_history_list: [
+        ...currentPayload.conversation_history_list,
+        input,
+      ],
     };
 
     try {
@@ -205,18 +298,21 @@ export default function Chatbot({
       }
 
       const updatedFlags = {
-        initial_condition:
-          data.message?.initial_condition !== undefined
-            ? data.message.initial_condition
-            : currentPayload.initial_condition,
-        second_condition:
-          data.message?.second_condition !== undefined
-            ? data.message.second_condition
-            : currentPayload.second_condition,
-        status:
-          data.message?.status !== undefined
-            ? data.message.status
-            : currentPayload.status,
+        conversation_history_list:
+          data.message.conversation_history_list ||
+          currentPayload.conversation_history_list,
+        activity_4_1st_condition:
+          data.message.activity_4_1st_condition !== undefined
+            ? data.message.activity_4_1st_condition
+            : currentPayload.activity_4_1st_condition,
+        activity_4_2nd_condition:
+          data.message.activity_4_2nd_condition !== undefined
+            ? data.message.activity_4_2nd_condition
+            : currentPayload.activity_4_2nd_condition,
+        satisfaction_condition:
+          data.message.satisfaction_condition !== undefined
+            ? data.message.satisfaction_condition
+            : currentPayload.satisfaction_condition,
       };
 
       // Handle voice and feedback logic
@@ -252,10 +348,9 @@ export default function Chatbot({
         ...prevPayload,
         ...updatedFlags,
         response: data.message?.response || "",
-        conversation_list: [
-          ...prevPayload.conversation_list,
+        conversation_history_list: [
+          ...prevPayload.conversation_history_list,
           input,
-          data.message?.response,
         ],
       }));
 
@@ -282,49 +377,91 @@ export default function Chatbot({
   }, []);
 
   return (
-    <Box
-      sx={{
-        height: "100%",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-      }}
-    >
-      <MainContainer style={{ width: "100%", height: "100%" }}>
-        <ChatContainer>
-          <MessageList
+    <div style={{ padding: "20px", fontFamily: "Arial, sans-serif" }}>
+      <div
+        style={{
+          border: "1px solid #ccc",
+          borderRadius: "10px",
+          padding: "20px",
+          maxWidth: "600px",
+          height: "290px",
+          overflowY: "hidden",
+          marginBottom: "20px",
+        }}
+      >
+        {messages.map((msg, index) => (
+          <div
+            key={index}
             style={{
-              width: "650px",
+              textAlign: msg.sender === "user" ? "right" : "left",
+              marginBottom: "10px",
             }}
           >
-            {messages.map((msg, index) => (
-              <Message
-                key={index}
-                model={{
-                  message: msg.text,
-                  sentTime: "just now",
-                  sender: msg.sender === "user" ? "You" : "Bot",
-                  direction: msg.sender === "user" ? "outgoing" : "incoming",
-                }}
-                style={{
-                  alignSelf: msg.sender === "user" ? "flex-end" : "flex-start",
-                  borderRadius: "15px",
-                  padding: "10px",
-                  marginBottom: "10px",
-                }}
-              />
-            ))}
-            <div ref={messagesEndRef} />
-          </MessageList>
-          <MessageInput
-            placeholder="Type your message..."
-            value={input}
-            onChange={(val) => setInput(val)}
-            onSend={sendMessage}
-            disabled={isInputDisabled}
-          />
-        </ChatContainer>
-      </MainContainer>
-    </Box>
+            <span
+              style={{
+                display: "inline-block",
+                padding: "10px",
+                borderRadius: "10px",
+                background: msg.sender === "user" ? "#d1e7dd" : "#f8d7da",
+                color: "#333",
+              }}
+            >
+              {msg.text}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "10px",
+          maxWidth: "600px",
+        }}
+      >
+        <button
+          onClick={handleStart}
+          style={{
+            padding: "10px 20px",
+            background: "rgb(37, 99, 235)",
+            color: "white",
+            border: "none",
+            borderRadius: "5px",
+            cursor: "pointer",
+          }}
+        >
+          Start Chat
+        </button>
+
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          disabled={isInputDisabled}
+          placeholder="Type your message..."
+          style={{
+            flex: "1",
+            padding: "10px",
+            borderRadius: "5px",
+            border: "1px solid #ccc",
+          }}
+        />
+
+        <button
+          onClick={sendMessage}
+          style={{
+            padding: "10px 20px",
+            background: "#28a745",
+            color: "white",
+            border: "none",
+            borderRadius: "5px",
+            cursor: "pointer",
+          }}
+        >
+          Send
+        </button>
+      </div>
+    </div>
   );
 }

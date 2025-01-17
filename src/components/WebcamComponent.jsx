@@ -1,25 +1,23 @@
 import React, { useState, useRef, useEffect } from "react";
 
 const WebcamComponent = () => {
-  const [isStreaming, setIsStreaming] = useState(false); // Tracks if the camera is streaming
-  const [error, setError] = useState(""); // Error messages
-  const videoRef = useRef(null); // Reference to the video element
-  const streamRef = useRef(null); // Reference to the media stream
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [error, setError] = useState("");
+  const videoRef = useRef(null);
+  const streamRef = useRef(null);
 
   const startWebcam = async () => {
     try {
-      // Request camera access
       const stream = await navigator.mediaDevices.getUserMedia({
         video: true,
         audio: false,
       });
 
       if (videoRef.current) {
-        // Bind the stream to the video element
         videoRef.current.srcObject = stream;
         streamRef.current = stream;
-        setIsStreaming(true); // Update state to indicate streaming started
-        setError(""); // Clear any existing error messages
+        setIsStreaming(true);
+        setError("");
       }
     } catch (err) {
       setError(
@@ -33,17 +31,16 @@ const WebcamComponent = () => {
     if (streamRef.current) {
       // Stop all video tracks
       streamRef.current.getTracks().forEach((track) => track.stop());
-      streamRef.current = null; // Clear the stream reference
+      streamRef.current = null;
 
       if (videoRef.current) {
-        videoRef.current.srcObject = null; // Detach the stream from the video element
+        videoRef.current.srcObject = null;
       }
 
-      setIsStreaming(false); // Update state to indicate streaming stopped
+      setIsStreaming(false);
     }
   };
 
-  // Cleanup when the component is unmounted
   useEffect(() => {
     return () => {
       stopWebcam();
@@ -96,7 +93,7 @@ const WebcamComponent = () => {
         {/* Placeholder Image */}
         {!isStreaming && (
           <img
-            src="/user-interface.jpg" // Replace with the actual image path
+            src="../../public/images/user-interface.jpg"
             alt="Camera Placeholder"
             style={{
               width: "100%",
@@ -107,13 +104,12 @@ const WebcamComponent = () => {
           />
         )}
 
-        {/* Video Element */}
         <video
-          ref={videoRef} // Bind the video element to the ref
+          ref={videoRef}
           autoPlay
           playsInline
           style={{
-            display: isStreaming ? "block" : "none", // Show only when streaming
+            display: isStreaming ? "block" : "none",
             width: "100%",
             height: "100%",
             objectFit: "contain",
