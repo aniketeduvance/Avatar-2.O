@@ -12,7 +12,7 @@ const SliderComponent = ({ setCurrentView }) => {
         "Based on your responses, this simulation will determine your proficiency",
         "on the following 4 tenets:",
       ],
-      image: "../../public/images/business-empathy1.jpg",
+      image: "/images/business-empathy1.jpg",
       subtitle: "Tenet 1 - Empathy:",
       subdescription:
         "Deeply understand and relate to the emotions, perspectives, and needs of others, whether employees, clients, or stakeholders. This will help foster stronger relationships, increase emotional intelligence, and build a supportive team culture.",
@@ -23,7 +23,7 @@ const SliderComponent = ({ setCurrentView }) => {
         "Based on your responses, this simulation will determine your proficiency",
         "on the following 4 tenets:",
       ],
-      image: "../../public/images/business-active.jpg",
+      image: "/images/business-active.jpg",
       subtitle: "Tenet 2 - Active Observation:",
       subdescription:
         "Be fully aware of and attentive to subtle cues, behaviors, or environmental factors that provide insight into team dynamics, project progress, or potential problems. This will help spot issues early, understand team strengths and weaknesses, and adjust their approach as needed.",
@@ -34,7 +34,7 @@ const SliderComponent = ({ setCurrentView }) => {
         "Based on your responses, this simulation will determine your proficiency",
         "on the following 4 tenets:",
       ],
-      image: "../../public/images/high-stakes.jpg",
+      image: "/images/high-stakes.jpg",
       subtitle: "Tenet 3 - Check for High Stakes:",
       subdescription:
         "To evaluate the potential consequences of decisions or situations to determine if the stakes are high, and adjust actions based on the risk involved. This ensures that resources, time, and attention are allocated proportionate to the significance of a situation.",
@@ -45,7 +45,7 @@ const SliderComponent = ({ setCurrentView }) => {
         "Based on your responses, this simulation will determine your proficiency",
         "on the following 4 tenets:",
       ],
-      image: "../../public/images/tenet4-img.jpg",
+      image: "/images/tenet4-img.jpg",
       subtitle: "Tenet 4 - Identify Varying Opinions:",
       subdescription:
         "To actively recognize and consider the diverse opinions, viewpoints, and feedback from team members or stakeholders. This will help grow inclusivity, spark creativity, and lead to better decision-making, helping managers achieve improved outcomes.",
