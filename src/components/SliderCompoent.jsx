@@ -167,7 +167,7 @@ const SliderComponent = ({ setCurrentView }) => {
                 onFocus={(e) => e.target.blur()}
               >
                 <img
-                  src="../../public/images/left-arrow1.png"
+                  src="/images/left-arrow1.png"
                   style={{ width: "50px", height: "50px" }}
                   alt="Previous"
                 />
@@ -273,7 +273,7 @@ const SliderComponent = ({ setCurrentView }) => {
                 onFocus={(e) => e.target.blur()}
               >
                 <img
-                  src="../../public/images/right-arrow.png"
+                  src="/images/right-arrow.png"
                   style={{ width: "50px", height: "50px" }}
                   alt="Next"
                 />

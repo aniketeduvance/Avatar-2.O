@@ -93,7 +93,7 @@ const WebcamComponent = () => {
         {/* Placeholder Image */}
         {!isStreaming && (
           <img
-            src="../../public/images/user-interface.jpg"
+            src="/images/user-interface.jpg"
             alt="Camera Placeholder"
             style={{
               width: "100%",
