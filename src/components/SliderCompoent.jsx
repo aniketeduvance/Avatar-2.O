@@ -74,7 +74,7 @@ const SliderComponent = ({ setCurrentView }) => {
         position: "relative",
         width: "100%",
         height: "100vh",
-        backgroundImage: "url('../../public/images/home-banner.jpg')",
+        backgroundImage: "url('/images/home-banner.jpg')",
         backgroundSize: "cover",
         backgroundPosition: "center",
       }}
