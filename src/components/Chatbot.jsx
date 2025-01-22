@@ -219,7 +219,7 @@ export default function Chatbot({
       const femaleVoiceDone = new Promise((resolve) => {
         if (data.message?.response) {
           console.log("Triggering female avatar lip-sync...");
-          speak(data.message.response, false);
+          // speak(data.message.response, false);
           onSpeakChange(true, "female");
           setTimeout(() => {
             console.log("Stopping female avatar lip-sync...");
@@ -234,7 +234,7 @@ export default function Chatbot({
       femaleVoiceDone.then(() => {
         if (data.message?.feedback) {
           console.log("Triggering male avatar lip-sync...");
-          speak(data.message.feedback, true);
+          // speak(data.message.feedback, true);
           onSpeakChange(true, "male");
           setTimeout(() => {
             console.log("Stopping male avatar lip-sync...");
@@ -319,7 +319,7 @@ export default function Chatbot({
       const femaleVoiceDone = new Promise((resolve) => {
         if (data.message?.response) {
           console.log("Triggering female avatar lip-sync...");
-          speak(data.message.response, false);
+          // speak(data.message.response, false);
           onSpeakChange(true, "female");
           setTimeout(() => {
             console.log("Stopping female avatar lip-sync...");
@@ -334,7 +334,7 @@ export default function Chatbot({
       femaleVoiceDone.then(() => {
         if (data.message?.feedback) {
           console.log("Triggering male avatar lip-sync...");
-          speak(data.message.feedback, true);
+          // speak(data.message.feedback, true);
           onSpeakChange(true, "male");
           setTimeout(() => {
             console.log("Stopping male avatar lip-sync...");
@@ -352,6 +352,7 @@ export default function Chatbot({
           ...prevPayload.conversation_history_list,
           input,
         ],
+        feedback: data.message?.feedback || prevPayload.feedback,
       }));
 
       // Update feedback

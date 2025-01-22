@@ -48,7 +48,8 @@ function MainAvatar() {
   };
 
   const handleFeedbackChange = (newFeedback) => {
-    setFeedback(newFeedback);
+    setFeedback(newFeedback); // Update feedback
+    setDisplayText(""); // Reset display text for new rendering
   };
 
   useEffect(() => {
@@ -61,7 +62,8 @@ function MainAvatar() {
         index++;
         if (index === formattedTranscript.length) {
           clearInterval(intervalId);
-          setFeedback(""); // Clear feedback after rendering
+          // Clear feedback after rendering
+          setTimeout(() => setFeedback(""), 1000); // Add a delay to ensure smooth rendering
         }
       }, 1);
 
@@ -69,6 +71,11 @@ function MainAvatar() {
     }
     setDisplayText("");
   }, [feedback]);
+
+  useEffect(() => {
+    console.log("Feedback:", feedback);
+    console.log("Display Text:", displayText);
+  }, [feedback, displayText]);
 
   const formatResponse = (response) => {
     // Replace markdown-like headers with HTML headers

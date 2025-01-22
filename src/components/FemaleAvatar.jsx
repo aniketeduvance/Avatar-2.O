@@ -19,7 +19,7 @@ export function FemaleAvatar({ isAudioPlaying }) {
   const currentShapeRef = useRef(0); // Tracks current mouth shape index
   const frameCount = useRef(0); // Controls the frame rate for shape transitions
 
-  const { nodes, materials } = useGLTF("/models/eduvancefemale.glb");
+  const { nodes, materials } = useGLTF("/models/6736e132cf2dd88926b7a346.glb");
 
   // Function to reset all mouth shapes to default (neutral position)
   const resetMouthShapes = () => {
@@ -133,4 +133,4 @@ export function FemaleAvatar({ isAudioPlaying }) {
   );
 }
 
-useGLTF.preload("/models/eduvancefemale.glb");
+useGLTF.preload("/models/6736e132cf2dd88926b7a346.glb");
