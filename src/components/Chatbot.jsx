@@ -8,6 +8,8 @@ import {
   MessageInput,
 } from "@chatscope/chat-ui-kit-react";
 import "@chatscope/chat-ui-kit-styles/dist/default/styles.min.css";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faMicrophone, faStopCircle } from "@fortawesome/free-solid-svg-icons";
 
 const apiUrl =
   "https://6c65myswq3qrewtyhg4vokkvvi0lewxd.lambda-url.ap-south-1.on.aws/";
@@ -256,19 +258,26 @@ export default function Chatbot({
     }
   };
 
-  const sendMessage = async () => {
-    if (!input.trim()) return;
+  const sendMessage = async (messageText) => {
+    if (!messageText.trim()) return;
+    console.log("sendMessage called with:", messageText);
+    setIsInputDisabled(true);
+    setInput("");
 
-    const userMessage = { text: input, sender: "user" };
+    const userMessage = { text: messageText, sender: "user" };
     setMessages((prevMessages) => [...prevMessages, userMessage]);
+
+    console.log("Updated messages state:", messages);
 
     const updatedPayload = {
       ...currentPayload,
       conversation_history_list: [
         ...currentPayload.conversation_history_list,
-        input,
+        messageText,
       ],
     };
+
+    console.log("Updated Payload before sending:", updatedPayload);
 
     try {
       setAnswerLoad(true);
@@ -368,14 +377,352 @@ export default function Chatbot({
       ]);
     } finally {
       setAnswerLoad(false);
-      setInput("");
+      setIsInputDisabled(false);
     }
+  };
+
+  // const sendMessage = async (messageText) => {
+  //   const text = messageText || input; // Ensure correct input source
+  //   if (!text.trim()) return;
+
+  //   setIsInputDisabled(true);
+  //   setInput(""); // Clear input field
+
+  //   // Add user's message to chat
+  //   const userMessage = { text, sender: "user" };
+  //   setMessages((prevMessages) => [...prevMessages, userMessage]);
+
+  //   // Show only the previous bot response before fetching the new one
+  //   if (previousResponse) {
+  //     const botMessage = {
+  //       text: previousResponse, // Display ONLY previous response, not the new one
+  //       sender: "bot",
+  //     };
+  //     setMessages((prevMessages) => [...prevMessages, botMessage]);
+  //   }
+
+  //   // Reset previousResponse so it doesn’t duplicate in the next request
+  //   setPreviousResponse("");
+
+  //   // Update payload with new conversation history
+  //   const updatedPayload = {
+  //     ...currentPayload,
+  //     conversation_history_list: [
+  //       ...currentPayload.conversation_history_list,
+  //       text, // Add new message to history
+  //     ],
+  //   };
+
+  //   try {
+  //     setAnswerLoad(true);
+
+  //     // Send request to backend
+  //     const response = await fetch(apiUrl, {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify(updatedPayload),
+  //     });
+
+  //     const data = await response.json();
+  //     console.log("API Response:", data);
+
+  //     // Store the latest response for next time
+  //     setPreviousResponse(data.message?.response || "");
+  //     if (data.message?.response) {
+  //       onResponseChange(data.message.response);
+  //     }
+
+  //     // Handle Lip-Sync for the bot's response
+  //     const femaleVoiceDone = new Promise((resolve) => {
+  //       if (data.message?.response) {
+  //         console.log("Triggering female avatar lip-sync...");
+  //         onSpeakChange(true, "female");
+
+  //         setTimeout(() => {
+  //           console.log("Stopping female avatar lip-sync...");
+  //           onSpeakChange(false, "female");
+  //           resolve();
+  //         }, Math.max(data.message.response.length * 100, 0));
+  //       } else {
+  //         resolve();
+  //       }
+  //     });
+
+  //     femaleVoiceDone.then(() => {
+  //       if (data.message?.feedback) {
+  //         console.log("Triggering male avatar lip-sync...");
+  //         onSpeakChange(true, "male");
+
+  //         setTimeout(() => {
+  //           console.log("Stopping male avatar lip-sync...");
+  //           onSpeakChange(false, "male");
+  //         }, Math.max(data.message.feedback.length * 100, 0));
+  //       }
+  //     });
+
+  //     // Display only the latest bot response
+  //     if (data.message?.response) {
+  //       setMessages((prevMessages) => [
+  //         ...prevMessages,
+  //         { text: data.message.response, sender: "bot" },
+  //       ]);
+  //       // speak(data.message.response, false);
+  //     }
+
+  //     // Display and speak feedback if available
+  //     if (data.message?.feedback) {
+  //       setFeedback(data.message.feedback);
+  //       onFeedbackChange(data.message.feedback);
+  //       // speak(data.message.feedback, true);
+  //     }
+
+  //     // Update the payload with conversation history
+  //     setCurrentPayload((prevPayload) => ({
+  //       ...prevPayload,
+  //       ...data.message,
+  //       conversation_history_list: [
+  //         ...prevPayload.conversation_history_list,
+  //         text,
+  //       ],
+  //       feedback: data.message?.feedback || prevPayload.feedback,
+  //     }));
+  //   } catch (error) {
+  //     console.error("Error:", error);
+  //     setMessages((prevMessages) => [
+  //       ...prevMessages,
+  //       { text: "Sorry, there was an error.", sender: "bot" },
+  //     ]);
+  //   } finally {
+  //     setAnswerLoad(false);
+  //     setIsInputDisabled(false);
+  //   }
+  // };
+
+  useEffect(() => {
+    const loadVoices = () => {
+      const availableVoices = window.speechSynthesis.getVoices();
+
+      const englishVoice = availableVoices.find(
+        (voice) => voice.lang === "en-GB" || voice.lang === "en-US"
+      );
+
+      const fallbackVoice = availableVoices.find((voice) =>
+        voice.lang.startsWith("en")
+      );
+
+      setSelectedVoice(englishVoice || fallbackVoice);
+
+      if (!englishVoice && !fallbackVoice) {
+        console.warn("No suitable English voice found; using default voice.");
+      }
+    };
+
+    if (window.speechSynthesis.onvoiceschanged !== undefined) {
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+    } else {
+      loadVoices();
+    }
+
+    // Stop speech if any other button is clicked
+    const handleButtonClick = (event) => {
+      if (
+        event.target.tagName === "BUTTON" &&
+        !event.target.classList.contains("speak-button")
+      ) {
+        window.speechSynthesis.cancel();
+        setIsSpeaking(false);
+      }
+    };
+
+    // Stop speech when the page is about to unload (refresh or navigate away)
+    const handleBeforeUnload = () => {
+      window.speechSynthesis.cancel();
+    };
+
+    // Add event listeners for button clicks and page unload
+    document.addEventListener("click", handleButtonClick);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    // Cleanup: Remove event listeners on unmount
+    return () => {
+      document.removeEventListener("click", handleButtonClick);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.speechSynthesis.cancel();
+    };
+  }, []);
+
+  const [transcription, setTranscription] = useState("");
+  const [isRecording, setIsRecording] = useState(false);
+
+  const audioContextRef = useRef(null);
+  const processorRef = useRef(null);
+  const streamRef = useRef(null);
+  const audioChunksRef = useRef([]);
+
+  const handleMicrophoneStop = async () => {
+    if (!isRecording) return;
+
+    // Stop audio processing
+    if (processorRef.current) processorRef.current.disconnect();
+    if (audioContextRef.current) audioContextRef.current.close();
+    if (streamRef.current)
+      streamRef.current.getTracks().forEach((track) => track.stop());
+
+    setIsRecording(false);
+    console.log("Recording stopped");
+
+    if (audioChunksRef.current.length === 0) {
+      console.error("No audio data captured");
+      return;
+    }
+
+    // Convert audio data to buffer
+    const totalLength = audioChunksRef.current.reduce(
+      (acc, chunk) => acc + chunk.length,
+      0
+    );
+    const fullAudioBuffer = new Float32Array(totalLength);
+    let offset = 0;
+    for (const chunk of audioChunksRef.current) {
+      fullAudioBuffer.set(chunk, offset);
+      offset += chunk.length;
+    }
+
+    audioChunksRef.current = []; // Clear for next recording
+
+    // Send the audio buffer for transcription
+    const transcriptionText = await sendAudioToServer(fullAudioBuffer);
+
+    console.log("Transcription received:", transcriptionText); // ✅ Check if transcription is received
+
+    if (transcriptionText.startsWith("Error")) {
+      console.error(transcriptionText);
+    } else {
+      console.log(
+        "Sending transcribed message to sendMessage:",
+        transcriptionText
+      ); // ✅ Debugging
+      sendMessage(transcriptionText); // ✅ Send message to backend
+    }
+  };
+
+  const captureAudio = () => {
+    if (isRecording) return;
+
+    navigator.mediaDevices
+      .getUserMedia({ audio: true })
+      .then((stream) => {
+        setIsRecording(true);
+        const audioContext = new AudioContext({ sampleRate: 16000 });
+        audioContextRef.current = audioContext;
+
+        const input = audioContext.createMediaStreamSource(stream);
+        const processor = audioContext.createScriptProcessor(4096, 1, 1);
+        processorRef.current = processor;
+        streamRef.current = stream;
+
+        input.connect(processor);
+        processor.connect(audioContext.destination);
+
+        processor.onaudioprocess = (event) => {
+          const audioData = event.inputBuffer.getChannelData(0);
+          audioChunksRef.current.push(new Float32Array(audioData));
+          console.log("Audio chunk received:", audioData.length);
+        };
+
+        console.log("Recording started");
+      })
+      .catch((err) => {
+        console.error("Error capturing audio:", err);
+      });
+  };
+
+  const sendAudioToServer = async (fullAudioBuffer) => {
+    try {
+      const int16Buffer = convertFloat32ToInt16(fullAudioBuffer);
+      console.log("Int16 Buffer Length:", int16Buffer.length);
+
+      const base64Audio = arrayBufferToBase64(int16Buffer.buffer);
+      console.log("Base64 Audio Length:", base64Audio.length);
+
+      const data = {
+        "audio-data": base64Audio,
+      };
+
+      const response = await fetch(
+        "https://2ebgwsxstddkvpgcehqjrhoflu0lerly.lambda-url.ap-south-1.on.aws/",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        }
+      );
+
+      const jsonResponse = await response.json();
+      console.log("Server Response:", jsonResponse);
+
+      if (response.ok && jsonResponse.transcription) {
+        return jsonResponse.transcription;
+      } else {
+        console.error("Error from server:", jsonResponse);
+        return `Error processing transcription: ${
+          jsonResponse.message || "Unknown error"
+        }`;
+      }
+    } catch (error) {
+      console.error("Error sending audio data:", error);
+      return `Error sending audio data: ${error.message || "Unknown error"}`;
+    }
+  };
+
+  const convertFloat32ToInt16 = (buffer) => {
+    const int16Buffer = new Int16Array(buffer.length);
+    for (let i = 0; i < buffer.length; i++) {
+      let s = Math.max(-1, Math.min(1, buffer[i]));
+      int16Buffer[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
+    }
+    return int16Buffer;
+  };
+
+  const arrayBufferToBase64 = (buffer) => {
+    let binary = "";
+    const bytes = new Uint8Array(buffer);
+    const len = bytes.byteLength;
+    for (let i = 0; i < len; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    return window.btoa(binary);
+  };
+
+  const handleSendMessage = (messageText, inputId) => {
+    if (messageText.trim() === "") {
+      return;
+    }
+    const newMessage = {
+      id: Math.random().toString(),
+      text: messageText,
+      sender: "User",
+      direction: "outgoing",
+    };
+    // Update the messages state by adding the new message
+    setMessages((prevMessages) => [...prevMessages, newMessage]);
+    sendMessage(messageText);
   };
 
   useEffect(() => {
     // setMessages([{ text: "Hello! How can I help you?", sender: "bot" }]);
     setIsInputDisabled(false);
   }, []);
+
+  const handleButtonClick = () => {
+    if (isRecording) {
+      handleMicrophoneStop();
+    } else {
+      captureAudio();
+    }
+  };
 
   return (
     <div style={{ padding: "20px", fontFamily: "Arial, sans-serif" }}>
@@ -386,29 +733,35 @@ export default function Chatbot({
           padding: "20px",
           maxWidth: "600px",
           height: "290px",
-          overflowY: "hidden",
+          overflowY: "auto",
           marginBottom: "20px",
+          scrollbarWidth: "none",
+          msOverflowStyle: "none",
         }}
       >
         {messages.map((msg, index) => (
           <div
             key={index}
             style={{
-              textAlign: msg.sender === "user" ? "right" : "left",
+              display: "flex",
+              justifyContent: msg.sender === "user" ? "flex-end" : "flex-start",
               marginBottom: "10px",
             }}
           >
-            <span
+            <div
               style={{
-                display: "inline-block",
+                maxWidth: "70%", // Limit message width for better readability
                 padding: "10px",
                 borderRadius: "10px",
                 background: msg.sender === "user" ? "#d1e7dd" : "#f8d7da",
                 color: "#333",
+                textAlign: "left",
+                whiteSpace: "pre-wrap", // Allow multiline messages
+                wordWrap: "break-word", // Prevent overflow issues
               }}
             >
               {msg.text}
-            </span>
+            </div>
           </div>
         ))}
       </div>
@@ -439,6 +792,12 @@ export default function Chatbot({
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              sendMessage(input);
+            }
+          }}
           disabled={isInputDisabled}
           placeholder="Type your message..."
           style={{
@@ -450,7 +809,7 @@ export default function Chatbot({
         />
 
         <button
-          onClick={sendMessage}
+          onClick={() => sendMessage(input)}
           style={{
             padding: "10px 20px",
             background: "#28a745",
@@ -461,6 +820,36 @@ export default function Chatbot({
           }}
         >
           Send
+        </button>
+        <button
+          onClick={handleButtonClick}
+          disabled={isInputDisabled}
+          style={{
+            background: "transparent",
+            border: "none",
+            cursor: isInputDisabled ? "not-allowed" : "pointer",
+            fontSize: "1rem",
+            fontFamily: "'Outfit', sans-serif",
+            color: "#121212",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            outline: "none",
+          }}
+        >
+          <FontAwesomeIcon
+            icon={isRecording ? faStopCircle : faMicrophone}
+            // icon={faMicrophone}
+            size="lg"
+            color={isRecording ? "red" : "black"}
+          />
+          <span
+            style={{
+              fontSize: "0.5rem",
+            }}
+          >
+            {isRecording ? "Stop" : "Speak"}
+          </span>
         </button>
       </div>
     </div>

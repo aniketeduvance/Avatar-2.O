@@ -48,8 +48,9 @@ function MainAvatar() {
   };
 
   const handleFeedbackChange = (newFeedback) => {
-    setFeedback(newFeedback); // Update feedback
-    setDisplayText(""); // Reset display text for new rendering
+    if (feedback !== newFeedback) {
+      setFeedback(newFeedback); // Only update if different
+    }
   };
 
   useEffect(() => {
@@ -57,25 +58,28 @@ function MainAvatar() {
       const formattedTranscript = formatResponse(feedback);
       let index = 0;
 
+      setDisplayText("");
+
       const intervalId = setInterval(() => {
-        setDisplayText((prev) => prev + formattedTranscript[index]);
-        index++;
-        if (index === formattedTranscript.length) {
+        if (index < formattedTranscript.length) {
+          setDisplayText((prev) => prev + formattedTranscript[index]);
+          index++;
+        } else {
           clearInterval(intervalId);
-          // Clear feedback after rendering
-          setTimeout(() => setFeedback(""), 1000); // Add a delay to ensure smooth rendering
         }
       }, 1);
 
-      return () => clearInterval(intervalId); // Cleanup interval
+      return () => clearInterval(intervalId);
+    } else {
+      setDisplayText("");
     }
-    setDisplayText("");
   }, [feedback]);
 
   useEffect(() => {
-    console.log("Feedback:", feedback);
-    console.log("Display Text:", displayText);
-  }, [feedback, displayText]);
+    if (displayText.length === feedback.length) {
+      console.log("Final Display Text:", displayText);
+    }
+  }, [displayText]);
 
   const formatResponse = (response) => {
     // Replace markdown-like headers with HTML headers

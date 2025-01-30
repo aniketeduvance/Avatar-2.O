@@ -19,7 +19,7 @@ export function AvatarDemo({ isAudioPlaying }) {
   const currentShapeRef = useRef(0); // Tracks current mouth shape index
   const frameCount = useRef(0); // Controls the frame rate for shape transitions
 
-  const { nodes, materials } = useGLTF("/models/673195710a5a634d6093651b.glb");
+  const { nodes, materials } = useGLTF("/models/6799f27b560f90e343f7527e.glb");
 
   // Function to reset all mouth shapes to default (neutral position)
   const resetMouthShapes = () => {
@@ -133,4 +133,4 @@ export function AvatarDemo({ isAudioPlaying }) {
   );
 }
 
-useGLTF.preload("/models/673195710a5a634d6093651b.glb");
+useGLTF.preload("/models/6799f27b560f90e343f7527e.glb");
