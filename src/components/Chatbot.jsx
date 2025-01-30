@@ -259,22 +259,25 @@ export default function Chatbot({
   };
 
   const sendMessage = async (messageText) => {
-    if (!messageText.trim()) return;
+    if (!messageText.trim()) {
+      setError("Please enter a message");
+      return;
+    }
+
     console.log("sendMessage called with:", messageText);
+
+    // Disable input and clear the input field
     setIsInputDisabled(true);
     setInput("");
 
+    // Add user message to UI
     const userMessage = { text: messageText, sender: "user" };
     setMessages((prevMessages) => [...prevMessages, userMessage]);
 
-    console.log("Updated messages state:", messages);
-
+    // Prepare the updated payload
     const updatedPayload = {
       ...currentPayload,
-      conversation_history_list: [
-        ...currentPayload.conversation_history_list,
-        messageText,
-      ],
+      users_response: messageText,
     };
 
     console.log("Updated Payload before sending:", updatedPayload);
@@ -291,83 +294,81 @@ export default function Chatbot({
       const data = await response.json();
       console.log("API Response:", data);
 
-      // Add the previous response to the messages
+      setAnswerLoad(false);
+
+      // Handle chatbot response
+      const chatbotMessage = data.message?.response || "";
+      const chatbotFeedback = data.message?.feedback || "";
+
+      // Append previous chatbot response before updating
       if (previousResponse) {
-        const botMessage = {
-          text: previousResponse, // Use the previous response
-          sender: "bot",
-        };
+        const botMessage = { text: previousResponse, sender: "bot" };
         setMessages((prevMessages) => [...prevMessages, botMessage]);
       }
 
-      // Update the previous response with the current one
-      setPreviousResponse(data.message?.response || "");
-      if (data.message?.response) {
-        onResponseChange(data.message.response);
+      // Store the current response as the previous response
+      setPreviousResponse(chatbotMessage);
+
+      // Update UI with chatbot's new response
+      if (chatbotMessage) {
+        setMessages((prevMessages) => [...prevMessages]);
+        onResponseChange(chatbotMessage);
       }
 
+      // Extract and update flags from the backend response
       const updatedFlags = {
         conversation_history_list:
           data.message.conversation_history_list ||
           currentPayload.conversation_history_list,
         activity_4_1st_condition:
-          data.message.activity_4_1st_condition !== undefined
-            ? data.message.activity_4_1st_condition
-            : currentPayload.activity_4_1st_condition,
+          data.message.activity_4_1st_condition ??
+          currentPayload.activity_4_1st_condition,
         activity_4_2nd_condition:
-          data.message.activity_4_2nd_condition !== undefined
-            ? data.message.activity_4_2nd_condition
-            : currentPayload.activity_4_2nd_condition,
+          data.message.activity_4_2nd_condition ??
+          currentPayload.activity_4_2nd_condition,
         satisfaction_condition:
-          data.message.satisfaction_condition !== undefined
-            ? data.message.satisfaction_condition
-            : currentPayload.satisfaction_condition,
+          data.message.satisfaction_condition ??
+          currentPayload.satisfaction_condition,
       };
 
-      // Handle voice and feedback logic
+      // Handle avatar lip-syncing
       const femaleVoiceDone = new Promise((resolve) => {
-        if (data.message?.response) {
+        if (chatbotMessage) {
           console.log("Triggering female avatar lip-sync...");
-          // speak(data.message.response, false);
           onSpeakChange(true, "female");
           setTimeout(() => {
             console.log("Stopping female avatar lip-sync...");
             onSpeakChange(false, "female");
             resolve();
-          }, Math.max(data.message.response.length * 100, 0));
+          }, Math.max(chatbotMessage.length * 100, 1000)); // Ensure at least 1s
         } else {
           resolve();
         }
       });
 
       femaleVoiceDone.then(() => {
-        if (data.message?.feedback) {
+        if (chatbotFeedback) {
           console.log("Triggering male avatar lip-sync...");
-          // speak(data.message.feedback, true);
           onSpeakChange(true, "male");
           setTimeout(() => {
             console.log("Stopping male avatar lip-sync...");
             onSpeakChange(false, "male");
-          }, Math.max(data.message.feedback.length * 100, 0));
+          }, Math.max(chatbotFeedback.length * 100, 1000));
         }
       });
 
-      // Update currentPayload with flags and conversation list
+      // Update payload and UI
       setCurrentPayload((prevPayload) => ({
         ...prevPayload,
         ...updatedFlags,
-        response: data.message?.response || "",
-        conversation_history_list: [
-          ...prevPayload.conversation_history_list,
-          input,
-        ],
-        feedback: data.message?.feedback || prevPayload.feedback,
+        response: chatbotMessage,
+        feedback: chatbotFeedback || prevPayload.feedback,
       }));
 
-      // Update feedback
-      if (data.message?.feedback) {
-        setFeedback(data.message.feedback);
-        onFeedbackChange(data.message.feedback);
+      // Update feedbackt
+      if (chatbotFeedback) {
+        setFeedback(chatbotFeedback);
+        onFeedbackChange(chatbotFeedback);
       }
     } catch (error) {
       console.error("Error:", error);
