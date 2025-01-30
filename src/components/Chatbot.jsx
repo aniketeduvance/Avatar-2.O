@@ -270,6 +270,12 @@ export default function Chatbot({
     setIsInputDisabled(true);
     setInput("");
 
+    // First, render the previous bot response if it exists
+    if (previousResponse) {
+      const botMessage = { text: previousResponse, sender: "bot" };
+      setMessages((prevMessages) => [...prevMessages, botMessage]);
+    }
+
     // Add user message to UI
     const userMessage = { text: messageText, sender: "user" };
     setMessages((prevMessages) => [...prevMessages, userMessage]);
@@ -300,18 +306,11 @@ export default function Chatbot({
       const chatbotMessage = data.message?.response || "";
       const chatbotFeedback = data.message?.feedback || "";
 
-      // Append previous chatbot response before updating
-      if (previousResponse) {
-        const botMessage = { text: previousResponse, sender: "bot" };
-        setMessages((prevMessages) => [...prevMessages, botMessage]);
-      }
-
       // Store the current response as the previous response
       setPreviousResponse(chatbotMessage);
 
       // Update UI with chatbot's new response
       if (chatbotMessage) {
-        setMessages((prevMessages) => [...prevMessages]);
         onResponseChange(chatbotMessage);
       }
 
