@@ -153,25 +153,31 @@ const SliderComponent = ({ setCurrentView }) => {
                 color: "white",
               }}
             >
-              <button
-                style={{
-                  backgroundColor: "transparent",
-                  border: "none",
-                  cursor: "pointer",
-                  position: "absolute",
-                  top: "50%",
-                  left: "1.25rem",
-                  transform: "translateY(-50%)",
-                }}
-                onClick={handlePrevious}
-                onFocus={(e) => e.target.blur()}
-              >
-                <img
-                  src="/images/left-arrow1.png"
-                  style={{ width: "50px", height: "50px" }}
-                  alt="Previous"
-                />
-              </button>
+              {currentSlide > 0 && (
+                <button
+                  style={{
+                    backgroundColor: "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                    position: "absolute",
+                    top: "50%",
+                    left: "1.5rem",
+                    transform: "translateY(-50%)",
+                  }}
+                  onClick={handlePrevious}
+                  onFocus={(e) => e.target.blur()}
+                >
+                  <img
+                    src="/images/left-arrow1.png"
+                    style={{
+                      width: "50px",
+                      height: "50px",
+                      borderStyle: "none",
+                    }}
+                    alt="Previous"
+                  />
+                </button>
+              )}
               <div
                 style={{
                   maxWidth: "80%",
