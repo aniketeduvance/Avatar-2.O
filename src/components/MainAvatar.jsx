@@ -49,27 +49,14 @@ function MainAvatar() {
 
   const handleFeedbackChange = (newFeedback) => {
     if (feedback !== newFeedback) {
-      setFeedback(newFeedback); // Only update if different
+      setFeedback(newFeedback ?? ""); // Default to empty string if undefined
     }
   };
 
   useEffect(() => {
-    if (feedback.length > 0) {
+    if (feedback && feedback.length > 0) {
       const formattedTranscript = formatResponse(feedback);
-      let index = 0;
-
-      setDisplayText("");
-
-      const intervalId = setInterval(() => {
-        if (index < formattedTranscript.length) {
-          setDisplayText((prev) => prev + formattedTranscript[index]);
-          index++;
-        } else {
-          clearInterval(intervalId);
-        }
-      }, 1);
-
-      return () => clearInterval(intervalId);
+      setDisplayText(formattedTranscript);
     } else {
       setDisplayText("");
     }
@@ -82,7 +69,6 @@ function MainAvatar() {
   }, [displayText]);
 
   const formatResponse = (response) => {
-    // Replace markdown-like headers with HTML headers
     const headers = response
       .replace(/(######\s?)(.*?)\n/g, "<h6>$2</h6>")
       .replace(/(#####\s?)(.*?)\n/g, "<h5>$2</h5>")
@@ -91,11 +77,10 @@ function MainAvatar() {
       .replace(/(##\s?)(.*?)\n/g, "<h2>$2</h2>")
       .replace(/(#\s?)(.*?)\n/g, "<h1>$2</h1>");
 
-    // Handle bold text (**text**) correctly
     const withBold = headers.replace(/\*\*(.*?)\*\*/g, "<b>$1</b>");
-
-    // Replace newline characters with <br /> for proper formatting
     const formattedResponse = withBold.replace(/\n/g, "<br />");
+
+    console.log("Formatted Response:", formattedResponse); // Add this line
 
     return formattedResponse;
   };

@@ -304,7 +304,8 @@ export default function Chatbot({
 
       // Handle chatbot response
       const chatbotMessage = data.message?.response || "";
-      const chatbotFeedback = data.message?.feedback || "";
+      const chatbotFeedback = data.message?.feedback ?? "";
+      console.log("Feedback from API:", chatbotFeedback);
 
       // Store the current response as the previous response
       setPreviousResponse(chatbotMessage);
