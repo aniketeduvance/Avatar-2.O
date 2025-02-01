@@ -193,11 +193,22 @@ function MainAvatar() {
                   boxShadow: 3,
                   borderRadius: 2,
                   backgroundColor: "#f5f5f5",
+                  overflowY: "scroll",
+                  scrollbarWidth: "none", // For Firefox
+                  "&::-webkit-scrollbar": {
+                    display: "none", // For Chrome, Safari, and Edge
+                  },
                 }}
               >
-                {botResponse.length > 0
-                  ? botResponse
-                  : "Manisha's Response will be displayed here"}
+                {botResponse.length > 0 ? (
+                  <div
+                    dangerouslySetInnerHTML={{
+                      __html: formatResponse(botResponse),
+                    }}
+                  />
+                ) : (
+                  "Manisha's Response will be displayed here"
+                )}
               </Box>
             </Box>
           </Grid>
